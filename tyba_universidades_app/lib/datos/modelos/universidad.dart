@@ -16,10 +16,24 @@ class Universidad {
 
   factory Universidad.fromJson(Map<String, dynamic> json) {
     return Universidad(
-      nombre: json['name'],
-      pais: json['country'],
-      dominios: List<String>.from(json['domains']),
-      paginasWeb: List<String>.from(json['web_pages']),
+      nombre: json['name'] ?? '',
+      pais: json['country'] ?? '',
+      dominios: List<String>.from(json['domains'] ?? []),
+      paginasWeb: List<String>.from(json['web_pages'] ?? []),
     );
   }
+
+  String get logoUrl {
+  if (dominios.isNotEmpty && dominios.first.isNotEmpty) {
+    return 'https://logo.clearbit.com/${dominios.first}';
+  }
+  return '';
+}
+
+String get logoFallback {
+  if (dominios.isNotEmpty && dominios.first.isNotEmpty) {
+    return 'https://www.google.com/s2/favicons?domain=${dominios.first}&sz=128';
+  }
+  return 'https://via.placeholder.com/100';
+}
 }

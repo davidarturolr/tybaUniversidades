@@ -19,6 +19,7 @@ class _ListaUniversidadesState extends State<ListaUniversidades> {
 
   bool esGrid = false;
   bool cargando = true;
+  bool cargandoMas = false;
 
   int pagina = 0;
   final int limite = 20;
@@ -31,11 +32,18 @@ class _ListaUniversidadesState extends State<ListaUniversidades> {
     cargarDatos();
 
     controller.addListener(() {
-      if (controller.position.pixels ==
-          controller.position.maxScrollExtent) {
+      if (controller.position.pixels >=
+              controller.position.maxScrollExtent - 200 &&
+          !cargandoMas) {
         cargarMas();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 
   Future<void> cargarDatos() async {
@@ -48,15 +56,20 @@ class _ListaUniversidadesState extends State<ListaUniversidades> {
     });
   }
 
-  void cargarMas() {
-    final siguiente = (pagina + 1) * limite;
+  Future<void> cargarMas() async {
+    if ((pagina + 1) * limite >= todas.length) return;
 
-    if (siguiente < todas.length) {
-      setState(() {
-        pagina++;
-        visibles = todas.take((pagina + 1) * limite).toList();
-      });
-    }
+    setState(() {
+      cargandoMas = true;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    setState(() {
+      pagina++;
+      visibles = todas.take((pagina + 1) * limite).toList();
+      cargandoMas = false;
+    });
   }
 
   @override
@@ -69,7 +82,16 @@ class _ListaUniversidadesState extends State<ListaUniversidades> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Universidades'),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/images/logo_tyba.png',
+              height: 30,
+            ),
+            const SizedBox(width: 10),
+            const Text('Universidades'),
+          ],
+        ),
         actions: [
           IconButton(
             icon: Icon(esGrid ? Icons.list : Icons.grid_view),
@@ -88,8 +110,15 @@ class _ListaUniversidadesState extends State<ListaUniversidades> {
   Widget construirLista() {
     return ListView.builder(
       controller: controller,
-      itemCount: visibles.length,
+      itemCount: visibles.length + (cargandoMas ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index >= visibles.length) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
         final uni = visibles[index];
 
         return TarjetaUniversidad(
@@ -103,11 +132,19 @@ class _ListaUniversidadesState extends State<ListaUniversidades> {
   Widget construirGrid() {
     return GridView.builder(
       controller: controller,
+      padding: const EdgeInsets.all(8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 0.8,
       ),
-      itemCount: visibles.length,
+      itemCount: visibles.length + (cargandoMas ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index >= visibles.length) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
         final uni = visibles[index];
 
         return TarjetaUniversidad(
